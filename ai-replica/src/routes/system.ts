@@ -33,7 +33,9 @@ export function createSystemRouter(services: Services): Router {
     };
 
     const ready = llm.available;
-    res.status(ready ? 200 : 503).json({ status: ready ? "ready" : "degraded", providers });
+    res
+      .status(ready ? 200 : 503)
+      .json({ status: ready ? "ready" : "degraded", providers });
   });
 
   /**

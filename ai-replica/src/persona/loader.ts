@@ -82,7 +82,10 @@ export class PersonaLoader {
       entries = await fsp.readdir(dir);
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code === "ENOENT") {
-        this.log.warn({ dir }, "persona directory does not exist — replying with no persona");
+        this.log.warn(
+          { dir },
+          "persona directory does not exist — replying with no persona",
+        );
         this.snapshot = EMPTY;
         return this.snapshot;
       }
@@ -134,13 +137,19 @@ export class PersonaLoader {
         clearTimeout(this.debounce);
         this.debounce = setTimeout(() => {
           void this.reload().catch((error: unknown) => {
-            this.log.error({ err: error }, "persona reload failed — keeping previous copy");
+            this.log.error(
+              { err: error },
+              "persona reload failed — keeping previous copy",
+            );
           });
         }, WATCH_DEBOUNCE_MS);
       });
       this.log.debug({ dir }, "watching persona directory for changes");
     } catch (error) {
-      this.log.warn({ err: error }, "could not watch persona directory — edits need a restart");
+      this.log.warn(
+        { err: error },
+        "could not watch persona directory — edits need a restart",
+      );
     }
   }
 

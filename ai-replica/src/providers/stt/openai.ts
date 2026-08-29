@@ -8,7 +8,11 @@
 import OpenAI, { toFile } from "openai";
 
 import type { Env } from "../../config/env.js";
-import { ProviderUnavailableError, UpstreamError, errorMessage } from "../../core/errors.js";
+import {
+  ProviderUnavailableError,
+  UpstreamError,
+  errorMessage,
+} from "../../core/errors.js";
 import type { Logger } from "../../core/logger.js";
 import type { STTProvider, Transcription } from "../types.js";
 
@@ -33,7 +37,9 @@ export class OpenAISTT implements STTProvider {
     logger: Logger,
   ) {
     this.log = logger.child({ component: "stt", provider: this.name });
-    this.client = env.OPENAI_API_KEY ? new OpenAI({ apiKey: env.OPENAI_API_KEY }) : undefined;
+    this.client = env.OPENAI_API_KEY
+      ? new OpenAI({ apiKey: env.OPENAI_API_KEY })
+      : undefined;
   }
 
   get available(): boolean {

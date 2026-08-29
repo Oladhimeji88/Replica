@@ -6,23 +6,22 @@
  * usable before anyone signs up for anything — switch `TTS_PROVIDER` to
  * `elevenlabs` when you want your own cloned voice.
  *
- * The library writes to a file rather than returning bytes, so synthesis goes
- * through the OS temp directory and is cleaned up immediately after reading.
+ * Requires msedge-tts v2: v1 cannot connect to the current endpoint, which now
+ * demands a signed `Sec-MS-GEC` token. See `.npmrc` for why that needs install
+ * scripts disabled.
  */
-import { randomUUID } from "node:crypto";
-import fsp from "node:fs/promises";
-import { tmpdir } from "node:os";
-import path from "node:path";
-
 import { MsEdgeTTS, OUTPUT_FORMAT } from "msedge-tts";
 
 import type { Env } from "../../config/env.js";
 import { UpstreamError, errorMessage } from "../../core/errors.js";
 import type { Logger } from "../../core/logger.js";
+import { collectStream } from "../../core/stream.js";
 import type { SpeechAudio, TTSProvider } from "../types.js";
 
 export class EdgeTTS implements TTSProvider {
   readonly name = "edge";
+  /** Needs no credentials, so it is always available. */
+  readonly available = true;
   private readonly log: Logger;
 
   constructor(
@@ -32,37 +31,34 @@ export class EdgeTTS implements TTSProvider {
     this.log = logger.child({ component: "tts", provider: this.name });
   }
 
-  /** Needs no credentials, so it is always available. */
-  get available(): boolean {
-    return true;
-  }
-
   async synthesize(text: string): Promise<SpeechAudio> {
-    const scratch = path.join(tmpdir(), `ai-replica-${randomUUID()}.mp3`);
+    const tts = new MsEdgeTTS();
 
     try {
       const started = Date.now();
-      const tts = new MsEdgeTTS();
       await tts.setMetadata(
         this.env.EDGE_TTS_VOICE,
         OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3,
       );
 
-      // Use the path the library reports rather than the one we asked for —
-      // it may adjust the extension to match the output format.
-      const written = (await tts.toFile(scratch, text)) || scratch;
-      const audio = await fsp.readFile(written);
+      const { audioStream } = tts.toStream(text);
+      const audio = await collectStream(audioStream);
 
       this.log.debug(
         { characters: text.length, bytes: audio.byteLength, ms: Date.now() - started },
         "speech synthesized",
       );
 
-      await fsp.rm(written, { force: true });
       return { audio, contentType: "audio/mpeg", extension: "mp3" };
     } catch (error) {
-      await fsp.rm(scratch, { force: true }).catch(() => undefined);
       throw new UpstreamError("Edge TTS", errorMessage(error));
+    } finally {
+      // Each synthesis opens its own WebSocket; without this they accumulate.
+      try {
+        tts.close();
+      } catch {
+        // Nothing to close if the connection never opened.
+      }
     }
   }
 }

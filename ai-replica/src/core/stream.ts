@@ -29,7 +29,9 @@ export async function collectStream(source: AnyStream): Promise<Buffer> {
   // `Readable.fromWeb` needs the exact web stream type; converting through the
   // async iterator instead works for both stream flavours and keeps types simple.
   const iterable = isWebStream(source)
-    ? (Readable.fromWeb(source as Parameters<typeof Readable.fromWeb>[0]) as AsyncIterable<Uint8Array>)
+    ? (Readable.fromWeb(
+        source as Parameters<typeof Readable.fromWeb>[0],
+      ) as AsyncIterable<Uint8Array>)
     : (source as AsyncIterable<Uint8Array>);
 
   const chunks: Buffer[] = [];

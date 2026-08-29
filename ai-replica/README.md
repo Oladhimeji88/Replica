@@ -27,12 +27,12 @@ Every external capability sits behind an interface in `src/providers/`. Each one
 has a free default and a paid upgrade, and the app runs with **no keys except
 the Anthropic one** — features switch themselves on as you add credentials.
 
-| Capability | Free default | Paid upgrade | Env var |
-| --- | --- | --- | --- |
-| Language model | — | Claude (required) | `ANTHROPIC_API_KEY` |
-| Text to speech | Microsoft Edge voices | ElevenLabs voice cloning | `TTS_PROVIDER` |
-| Speech to text | Browser `SpeechRecognition` | Deepgram or OpenAI Whisper | `STT_PROVIDER` |
-| Talking face | off | SadTalker on a free Colab GPU | `AVATAR_PROVIDER` |
+| Capability     | Free default                | Paid upgrade                  | Env var             |
+| -------------- | --------------------------- | ----------------------------- | ------------------- |
+| Language model | —                           | Claude (required)             | `ANTHROPIC_API_KEY` |
+| Text to speech | Microsoft Edge voices       | ElevenLabs voice cloning      | `TTS_PROVIDER`      |
+| Speech to text | Browser `SpeechRecognition` | Deepgram or OpenAI Whisper    | `STT_PROVIDER`      |
+| Talking face   | off                         | SadTalker on a free Colab GPU | `AVATAR_PROVIDER`   |
 
 The browser asks `GET /api/capabilities` on load and adapts, so the same page
 works in every configuration without edits.
@@ -69,33 +69,33 @@ automatically, and edits are picked up without a restart. Check what is loaded a
 
 ## Scripts
 
-| Command | What it does |
-| --- | --- |
-| `npm run dev` | Development server, restarts on change |
-| `npm start` | Runs the compiled build (`npm run build` first) |
-| `npm run build` | Type-checks and compiles `src/` to `dist/` |
-| `npm run typecheck` | Types only, no output |
-| `npm run lint` | ESLint, including type-aware rules |
-| `npm run format` | Prettier, write mode |
-| `npm test` | Vitest suite |
-| `npm run test:coverage` | Suite plus a coverage report |
-| `npm run check` | Everything CI runs, in one command |
+| Command                 | What it does                                    |
+| ----------------------- | ----------------------------------------------- |
+| `npm run dev`           | Development server, restarts on change          |
+| `npm start`             | Runs the compiled build (`npm run build` first) |
+| `npm run build`         | Type-checks and compiles `src/` to `dist/`      |
+| `npm run typecheck`     | Types only, no output                           |
+| `npm run lint`          | ESLint, including type-aware rules              |
+| `npm run format`        | Prettier, write mode                            |
+| `npm test`              | Vitest suite                                    |
+| `npm run test:coverage` | Suite plus a coverage report                    |
+| `npm run check`         | Everything CI runs, in one command              |
 
 ---
 
 ## HTTP API
 
-| Method | Path | Purpose |
-| --- | --- | --- |
-| `POST` | `/api/chat/stream` | Chat, streamed as Server-Sent Events. What the UI uses. |
-| `POST` | `/api/chat` | Chat, single JSON response. Simpler to script against. |
-| `POST` | `/api/tts` | Text in, audio bytes out. |
-| `POST` | `/api/transcribe` | Multipart audio (field `audio`) in, text out. |
-| `GET` | `/api/capabilities` | Which providers are switched on. |
-| `GET` | `/api/persona/status` | Files loaded, size, content hash. |
-| `POST` | `/api/persona/reload` | Force a re-read from disk. |
-| `GET` | `/health/live` | Process is up. For restart policies. |
-| `GET` | `/health/ready` | Can serve traffic; per-provider detail. 503 when degraded. |
+| Method | Path                  | Purpose                                                    |
+| ------ | --------------------- | ---------------------------------------------------------- |
+| `POST` | `/api/chat/stream`    | Chat, streamed as Server-Sent Events. What the UI uses.    |
+| `POST` | `/api/chat`           | Chat, single JSON response. Simpler to script against.     |
+| `POST` | `/api/tts`            | Text in, audio bytes out.                                  |
+| `POST` | `/api/transcribe`     | Multipart audio (field `audio`) in, text out.              |
+| `GET`  | `/api/capabilities`   | Which providers are switched on.                           |
+| `GET`  | `/api/persona/status` | Files loaded, size, content hash.                          |
+| `POST` | `/api/persona/reload` | Force a re-read from disk.                                 |
+| `GET`  | `/health/live`        | Process is up. For restart policies.                       |
+| `GET`  | `/health/ready`       | Can serve traffic; per-provider detail. 503 when degraded. |
 
 Request and response shapes:
 
@@ -110,14 +110,14 @@ curl -X POST localhost:3000/api/chat \
 
 The streaming endpoint takes the same body and emits these events:
 
-| Event | Payload | Meaning |
-| --- | --- | --- |
-| `delta` | `{ text }` | The next fragment of the reply. |
-| `status` | `{ message }` | Progress note, e.g. the face is rendering. |
-| `video` | `{ videoUrl }` | A talking-face clip is ready. |
-| `face_error` | `{ message }` | The face failed; the text answer still stands. |
-| `done` | `{ reply, usage, model }` | Complete. |
-| `error` | `{ message }` | The turn failed. |
+| Event        | Payload                   | Meaning                                        |
+| ------------ | ------------------------- | ---------------------------------------------- |
+| `delta`      | `{ text }`                | The next fragment of the reply.                |
+| `status`     | `{ message }`             | Progress note, e.g. the face is rendering.     |
+| `video`      | `{ videoUrl }`            | A talking-face clip is ready.                  |
+| `face_error` | `{ message }`             | The face failed; the text answer still stands. |
+| `done`       | `{ reply, usage, model }` | Complete.                                      |
+| `error`      | `{ message }`             | The turn failed.                               |
 
 Errors everywhere use one shape: `{ "error": { "code", "message", "details? } }`.
 
@@ -128,17 +128,17 @@ Errors everywhere use one shape: `{ "error": { "code", "message", "details? } }`
 Every variable is documented in [`.env.example`](.env.example) and validated at
 boot by `src/config/env.ts`. The ones worth knowing about:
 
-| Variable | Default | Notes |
-| --- | --- | --- |
-| `CLAUDE_MODEL` | `claude-opus-5` | Any current model id. |
-| `CLAUDE_EFFORT` | `low` | `low` … `max`. Spoken replies are short, so `low` keeps them fast. Raise if answers feel shallow. |
-| `CLAUDE_MAX_TOKENS` | `2048` | Replies are read aloud; long ones are rarely wanted. |
-| `TTS_PROVIDER` | `edge` | `elevenlabs` \| `edge` \| `none` |
-| `STT_PROVIDER` | `none` | `deepgram` \| `openai` \| `none` |
-| `AVATAR_PROVIDER` | `none` | `colab` \| `none` |
-| `RATE_LIMIT_MAX` | `30` | Requests per minute per IP across `/api`. |
-| `MEDIA_RETENTION_MS` | `3600000` | Generated face clips are deleted after an hour. |
-| `TRUST_PROXY` | `false` | Set to `true` behind Render / Railway / Fly / nginx. |
+| Variable             | Default         | Notes                                                                                             |
+| -------------------- | --------------- | ------------------------------------------------------------------------------------------------- |
+| `CLAUDE_MODEL`       | `claude-opus-5` | Any current model id.                                                                             |
+| `CLAUDE_EFFORT`      | `low`           | `low` … `max`. Spoken replies are short, so `low` keeps them fast. Raise if answers feel shallow. |
+| `CLAUDE_MAX_TOKENS`  | `2048`          | Replies are read aloud; long ones are rarely wanted.                                              |
+| `TTS_PROVIDER`       | `edge`          | `elevenlabs` \| `edge` \| `none`                                                                  |
+| `STT_PROVIDER`       | `none`          | `deepgram` \| `openai` \| `none`                                                                  |
+| `AVATAR_PROVIDER`    | `none`          | `colab` \| `none`                                                                                 |
+| `RATE_LIMIT_MAX`     | `30`            | Requests per minute per IP across `/api`.                                                         |
+| `MEDIA_RETENTION_MS` | `3600000`       | Generated face clips are deleted after an hour.                                                   |
+| `TRUST_PROXY`        | `false`         | Set to `true` behind Render / Railway / Fly / nginx.                                              |
 
 ---
 
@@ -286,8 +286,12 @@ tests/         vitest suite, run against fake providers
 
 ### Notes on two dependency choices
 
-- **`msedge-tts` is pinned to `^1.3.4`.** Version 2 added a `preinstall` hook
-  (`npx only-allow pnpm`) that makes `npm install` fail outright.
+- **Install scripts are disabled** in `.npmrc` (`ignore-scripts=true`). Partly
+  supply-chain hygiene, partly necessity: `msedge-tts` v2 declares
+  `preinstall: npx only-allow pnpm`, which aborts any npm install. v2 is the
+  version that still works — v1 cannot connect to Microsoft's endpoint, which
+  now requires a signed token — so the project needs v2 and npm both. Nothing
+  in the tree depends on an install hook.
 - **Deepgram is called over REST rather than through their SDK.** It is a single
   POST with the audio as the body; their JavaScript SDK has been rewritten
   across major versions more than once, which is not worth carrying for one call.

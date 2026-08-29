@@ -88,7 +88,9 @@ describe("system prompt", () => {
     const fixture = await createPersonaFixture({});
     cleanups.push(fixture.cleanup);
 
-    expect(buildSystemPrompt(fixture.loader.current())).toContain("No persona files found");
+    expect(buildSystemPrompt(fixture.loader.current())).toContain(
+      "No persona files found",
+    );
   });
 
   it("is byte-identical for an unchanged corpus", async () => {

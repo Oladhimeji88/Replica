@@ -5,7 +5,7 @@
 
 FROM node:22-alpine AS deps
 WORKDIR /app
-COPY package.json package-lock.json ./
+COPY package.json package-lock.json .npmrc ./
 RUN npm ci
 
 FROM deps AS build
@@ -21,7 +21,7 @@ WORKDIR /app
 # Init process so SIGTERM reaches Node and the graceful shutdown path runs.
 RUN apk add --no-cache tini
 
-COPY package.json package-lock.json ./
+COPY package.json package-lock.json .npmrc ./
 RUN npm ci --omit=dev && npm cache clean --force
 
 COPY --from=build --chown=node:node /app/dist ./dist

@@ -73,7 +73,11 @@ export interface Transcription {
 }
 
 export interface STTProvider extends ProviderInfo {
-  transcribe(audio: Buffer, mimeType: string, signal?: AbortSignal): Promise<Transcription>;
+  transcribe(
+    audio: Buffer,
+    mimeType: string,
+    signal?: AbortSignal,
+  ): Promise<Transcription>;
 }
 
 // --- Talking-face avatar ---------------------------------------------------

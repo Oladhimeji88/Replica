@@ -14,7 +14,6 @@ import { errorMessage } from "../core/errors.js";
 import { validateBody } from "../middleware/validate.js";
 import { buildSystemPrompt } from "../persona/prompt.js";
 import type { Services } from "../providers/registry.js";
-import type { ChatMessage } from "../providers/types.js";
 
 /** Guard rails so one request cannot pin the process or blow the context window. */
 const MAX_MESSAGES = 100;
@@ -53,7 +52,9 @@ export function createChatRouter(services: Services): Router {
    * Renders a talking-face clip for a finished reply. Never throws: the face is
    * a bonus, so a failure downgrades to text rather than losing the answer.
    */
-  async function renderFace(text: string): Promise<{ videoUrl?: string; faceError?: string }> {
+  async function renderFace(
+    text: string,
+  ): Promise<{ videoUrl?: string; faceError?: string }> {
     if (!avatar?.available) {
       return { faceError: "the talking-face provider is not configured" };
     }
@@ -75,7 +76,7 @@ export function createChatRouter(services: Services): Router {
     const { messages, useFace } = req.body as ChatRequestBody;
 
     const completion = await llm.complete({
-      messages: messages as ChatMessage[],
+      messages: messages,
       system: buildSystemPrompt(persona.current()),
     });
 
@@ -116,7 +117,7 @@ export function createChatRouter(services: Services): Router {
 
     try {
       const generator = llm.stream({
-        messages: messages as ChatMessage[],
+        messages: messages,
         system: buildSystemPrompt(persona.current()),
         signal: abort.signal,
       });

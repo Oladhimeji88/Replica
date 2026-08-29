@@ -74,7 +74,8 @@ export class ColabAvatar implements AvatarProvider {
         signal: combined,
       });
     } catch (error) {
-      if (timeoutSignal.aborted) throw new TimeoutError("Talking-face rendering", timeoutMs);
+      if (timeoutSignal.aborted)
+        throw new TimeoutError("Talking-face rendering", timeoutMs);
       throw new UpstreamError("Colab renderer", errorMessage(error), 504);
     }
 

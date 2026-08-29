@@ -16,12 +16,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import type { Env } from "../../config/env.js";
 import { ProviderUnavailableError, UpstreamError } from "../../core/errors.js";
 import type { Logger } from "../../core/logger.js";
-import type {
-  ChatCompletion,
-  ChatRequest,
-  LLMProvider,
-  TokenUsage,
-} from "../types.js";
+import type { ChatCompletion, ChatRequest, LLMProvider, TokenUsage } from "../types.js";
 
 const EMPTY_USAGE: TokenUsage = {
   inputTokens: 0,

@@ -25,7 +25,9 @@ async function main(): Promise<void> {
   } catch (error) {
     if (error instanceof ConfigError) {
       // No logger yet, and this is the one message the operator must read.
-      process.stderr.write(`\n${error.message}\n\nSee .env.example for the full list.\n\n`);
+      process.stderr.write(
+        `\n${error.message}\n\nSee .env.example for the full list.\n\n`,
+      );
       process.exitCode = 1;
       return;
     }
@@ -69,7 +71,12 @@ interface ShutdownContext {
   logger: Logger;
 }
 
-function installShutdownHandlers({ server, persona, janitor, logger }: ShutdownContext): void {
+function installShutdownHandlers({
+  server,
+  persona,
+  janitor,
+  logger,
+}: ShutdownContext): void {
   let shuttingDown = false;
 
   const shutdown = (signal: string): void => {

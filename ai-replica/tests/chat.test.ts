@@ -176,6 +176,9 @@ describe("POST /api/chat/stream", () => {
     const harness = await createTestApp();
     cleanup = harness.cleanup;
 
-    await request(harness.app).post("/api/chat/stream").send({ messages: [] }).expect(400);
+    await request(harness.app)
+      .post("/api/chat/stream")
+      .send({ messages: [] })
+      .expect(400);
   });
 });

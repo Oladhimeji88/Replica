@@ -8,7 +8,11 @@
 import { ElevenLabsClient } from "@elevenlabs/elevenlabs-js";
 
 import type { Env } from "../../config/env.js";
-import { ProviderUnavailableError, UpstreamError, errorMessage } from "../../core/errors.js";
+import {
+  ProviderUnavailableError,
+  UpstreamError,
+  errorMessage,
+} from "../../core/errors.js";
 import type { Logger } from "../../core/logger.js";
 import { collectStream } from "../../core/stream.js";
 import type { SpeechAudio, TTSProvider } from "../types.js";

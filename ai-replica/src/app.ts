@@ -12,7 +12,6 @@ import { pinoHttp } from "pino-http";
 
 import { corsOrigins, type Env } from "./config/env.js";
 import { GENERATED_DIR, PUBLIC_DIR } from "./config/paths.js";
-import type { Logger } from "./core/logger.js";
 import { createErrorHandler, notFoundHandler } from "./middleware/error-handler.js";
 import type { Services } from "./providers/registry.js";
 import { createChatRouter } from "./routes/chat.js";
@@ -46,7 +45,9 @@ function corsMiddleware(env: Env): ReturnType<typeof cors> {
   const origins = corsOrigins(env);
   // No allowlist means the page and the API share an origin, which is the
   // normal deployment — so send no CORS headers at all rather than `*`.
-  return cors(origins.length > 0 ? { origin: origins, credentials: true } : { origin: false });
+  return cors(
+    origins.length > 0 ? { origin: origins, credentials: true } : { origin: false },
+  );
 }
 
 export function createApp(services: Services): Express {
@@ -79,7 +80,10 @@ export function createApp(services: Services): Express {
       standardHeaders: "draft-7",
       legacyHeaders: false,
       message: {
-        error: { code: "rate_limited", message: "Too many requests — slow down a moment." },
+        error: {
+          code: "rate_limited",
+          message: "Too many requests — slow down a moment.",
+        },
       },
     }),
   );

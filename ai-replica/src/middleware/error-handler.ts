@@ -44,7 +44,12 @@ export function createErrorHandler(logger: Logger): ErrorRequestHandler {
       );
     } else {
       log.warn(
-        { code: appError.code, message: appError.message, method: req.method, path: req.path },
+        {
+          code: appError.code,
+          message: appError.message,
+          method: req.method,
+          path: req.path,
+        },
         "request rejected",
       );
     }

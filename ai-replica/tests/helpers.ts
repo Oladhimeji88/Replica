@@ -24,7 +24,7 @@ import type {
 } from "../src/providers/types.js";
 
 export function testEnv(overrides: Record<string, string> = {}): Env {
-  return loadConfig({ NODE_ENV: "test", ...overrides } as NodeJS.ProcessEnv);
+  return loadConfig({ NODE_ENV: "test", ...overrides });
 }
 
 export function testLogger(): Logger {
@@ -64,6 +64,8 @@ export class FakeLLM implements LLMProvider {
     return Promise.resolve(this.completion());
   }
 
+  // Nothing to await: this stands in for a network stream without being one.
+  // eslint-disable-next-line @typescript-eslint/require-await
   async *stream(request: {
     system: string;
     messages: unknown[];

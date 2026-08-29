@@ -1,0 +1,19 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+coverage/
+
+# Secrets
+.env
+.env.local
+.env.*.local
+
+# Generated media (video of your face — never commit it)
+public/generated/*
+!public/generated/.gitkeep
+
+# Logs and scratch
+*.log
+tmp/

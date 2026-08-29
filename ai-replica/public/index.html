@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI Replica</title>
+    <style>
+      :root {
+        --bg: #f7f5f2;
+        --panel: #ffffff;
+        --accent: #d97757;
+        --accent-dark: #c05f3f;
+        --text: #2b2a28;
+        --muted: #8a8580;
+        --line: #e5e0da;
+        --bubble-user: #eae6e1;
+        --bubble-ai: #fdf6f0;
+        --danger: #b4432b;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        display: flex;
+        justify-content: center;
+        min-height: 100vh;
+      }
+
+      .app {
+        width: 100%;
+        max-width: 760px;
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        padding: 16px;
+      }
+
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      header h1 {
+        font-size: 18px;
+        margin: 0;
+        white-space: nowrap;
+      }
+
+      .header-right {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .capabilities {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        justify-content: flex-end;
+      }
+
+      .pill {
+        font-size: 11px;
+        padding: 3px 8px;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        background: var(--panel);
+        color: var(--muted);
+      }
+
+      .pill.on {
+        border-color: #e6c4b2;
+        background: var(--bubble-ai);
+        color: var(--accent-dark);
+      }
+
+      .face-toggle {
+        font-size: 12px;
+        display: none;
+        align-items: center;
+        gap: 6px;
+        color: var(--muted);
+        white-space: nowrap;
+      }
+
+      .face-toggle.visible {
+        display: flex;
+      }
+
+      #face-video {
+        width: 100%;
+        border-radius: 12px;
+        display: none;
+        margin-top: 12px;
+        background: #000;
+      }
+
+      #messages {
+        flex: 1;
+        overflow-y: auto;
+        padding: 16px 4px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .msg {
+        max-width: 82%;
+        padding: 10px 14px;
+        border-radius: 14px;
+        line-height: 1.45;
+        font-size: 15px;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+      }
+
+      .msg.user {
+        align-self: flex-end;
+        background: var(--bubble-user);
+      }
+
+      .msg.ai {
+        align-self: flex-start;
+        background: var(--bubble-ai);
+        border: 1px solid #f0e2d6;
+      }
+
+      .msg.ai.streaming::after {
+        content: "\258C";
+        color: var(--accent);
+        animation: blink 1s steps(2, start) infinite;
+      }
+
+      @keyframes blink {
+        to {
+          visibility: hidden;
+        }
+      }
+
+      .msg.error {
+        align-self: flex-start;
+        background: #fbeae6;
+        border: 1px solid #f0cabf;
+        color: var(--danger);
+        font-size: 14px;
+      }
+
+      form {
+        display: flex;
+        gap: 8px;
+        padding-top: 12px;
+        border-top: 1px solid var(--line);
+      }
+
+      input[type="text"] {
+        flex: 1;
+        padding: 12px 14px;
+        border-radius: 10px;
+        border: 1px solid #ddd6cd;
+        font-size: 15px;
+        font-family: inherit;
+        background: var(--panel);
+        color: inherit;
+      }
+
+      input[type="text"]:focus-visible,
+      button:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
+      button {
+        border: none;
+        border-radius: 10px;
+        padding: 0 16px;
+        font-size: 15px;
+        font-family: inherit;
+        cursor: pointer;
+      }
+
+      button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      #send-btn {
+        background: var(--accent);
+        color: #fff;
+      }
+
+      #send-btn:hover:not(:disabled) {
+        background: var(--accent-dark);
+      }
+
+      #mic-btn {
+        background: var(--panel);
+        border: 1px solid #ddd6cd;
+        width: 48px;
+        font-size: 18px;
+        padding: 0;
+      }
+
+      #mic-btn.recording {
+        background: var(--accent);
+        border-color: var(--accent);
+        animation: pulse 1.4s ease-in-out infinite;
+      }
+
+      @keyframes pulse {
+        50% {
+          opacity: 0.6;
+        }
+      }
+
+      #status {
+        font-size: 12px;
+        color: var(--muted);
+        min-height: 18px;
+        padding-top: 6px;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        * {
+          animation: none !important;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="app">
+      <header>
+        <h1>AI Replica</h1>
+        <div class="header-right">
+          <label class="face-toggle" id="face-toggle-label">
+            <input type="checkbox" id="face-mode" />
+            Talking face
+          </label>
+          <div class="capabilities" id="capabilities"></div>
+        </div>
+      </header>
+
+      <video id="face-video" playsinline controls></video>
+      <div id="messages" aria-live="polite"></div>
+
+      <form id="chat-form">
+        <button type="button" id="mic-btn" title="Record a question" aria-label="Record">
+          Mic
+        </button>
+        <input
+          type="text"
+          id="chat-input"
+          placeholder="Ask me anything..."
+          autocomplete="off"
+          aria-label="Your question"
+        />
+        <button type="submit" id="send-btn">Send</button>
+      </form>
+      <div id="status" role="status"></div>
+    </div>
+
+    <script>
+      "use strict";
+
+      const els = {
+        messages: document.getElementById("messages"),
+        form: document.getElementById("chat-form"),
+        input: document.getElementById("chat-input"),
+        send: document.getElementById("send-btn"),
+        mic: document.getElementById("mic-btn"),
+        status: document.getElementById("status"),
+        video: document.getElementById("face-video"),
+        faceMode: document.getElementById("face-mode"),
+        faceLabel: document.getElementById("face-toggle-label"),
+        capabilities: document.getElementById("capabilities"),
+      };
+
+      /** Conversation history, replayed to the server on every turn. */
+      const history = [];
+
+      /** Filled in from /api/capabilities so one page works in any configuration. */
+      let capabilities = { streaming: true, tts: null, stt: null, avatar: null };
+
+      let busy = false;
+      let currentAudio = null;
+
+      // ---------------------------------------------------------------------
+      // Rendering
+      // ---------------------------------------------------------------------
+
+      function addMessage(role, text) {
+        const div = document.createElement("div");
+        div.className = "msg " + role;
+        div.textContent = text;
+        els.messages.appendChild(div);
+        els.messages.scrollTop = els.messages.scrollHeight;
+        return div;
+      }
+
+      function setStatus(text) {
+        els.status.textContent = text || "";
+      }
+
+      function setBusy(value) {
+        busy = value;
+        els.send.disabled = value;
+        els.input.disabled = value;
+        els.mic.disabled = value || !micSupported();
+      }
+
+      function renderCapabilities() {
+        const pills = [
+          {
+            label: capabilities.tts ? "voice: " + capabilities.tts : "voice: browser",
+            on: Boolean(capabilities.tts),
+          },
+          {
+            label: capabilities.stt ? "mic: " + capabilities.stt : "mic: browser",
+            on: Boolean(capabilities.stt),
+          },
+        ];
+        if (capabilities.avatar) {
+          pills.push({ label: "face: " + capabilities.avatar, on: true });
+        }
+
+        els.capabilities.replaceChildren();
+        for (const pill of pills) {
+          const span = document.createElement("span");
+          span.className = "pill" + (pill.on ? " on" : "");
+          span.textContent = pill.label;
+          els.capabilities.appendChild(span);
+        }
+
+        els.faceLabel.classList.toggle("visible", Boolean(capabilities.avatar));
+      }
+
+      // ---------------------------------------------------------------------
+      // Talking to the server
+      // ---------------------------------------------------------------------
+
+      async function errorFrom(response) {
+        try {
+          const body = await response.json();
+          if (body && body.error && body.error.message) return body.error.message;
+        } catch (ignored) {
+          // Fall through to the generic message below.
+        }
+        return "Request failed (" + response.status + ")";
+      }
+
+      /**
+       * POSTs to the SSE endpoint and dispatches each frame. EventSource cannot
+       * send a request body, so the stream is read and parsed by hand.
+       */
+      async function streamChat(payload, onEvent) {
+        const response = await fetch("/api/chat/stream", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
+        if (!response.ok || !response.body) {
+          throw new Error(await errorFrom(response));
+        }
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+
+        for (;;) {
+          const chunk = await reader.read();
+          if (chunk.done) break;
+
+          buffer += decoder.decode(chunk.value, { stream: true });
+
+          let boundary = buffer.indexOf("\n\n");
+          while (boundary !== -1) {
+            const frame = buffer.slice(0, boundary);
+            buffer = buffer.slice(boundary + 2);
+
+            const eventMatch = /^event: (.+)$/m.exec(frame);
+            const dataMatch = /^data: (.+)$/m.exec(frame);
+            if (dataMatch) {
+              onEvent(eventMatch ? eventMatch[1] : "message", JSON.parse(dataMatch[1]));
+            }
+
+            boundary = buffer.indexOf("\n\n");
+          }
+        }
+      }
+
+      async function sendMessage(text) {
+        const question = (text || "").trim();
+        if (!question || busy) return;
+
+        stopPlayback();
+        addMessage("user", question);
+        history.push({ role: "user", content: question });
+
+        const useFace = Boolean(capabilities.avatar) && els.faceMode.checked;
+        const bubble = addMessage("ai", "");
+        bubble.classList.add("streaming");
+        setBusy(true);
+        setStatus(useFace ? "Thinking, then rendering your face..." : "Thinking...");
+
+        let reply = "";
+        let failed = false;
+
+        try {
+          await streamChat({ messages: history, useFace }, (event, data) => {
+            if (event === "delta") {
+              reply += data.text;
+              bubble.textContent = reply;
+              els.messages.scrollTop = els.messages.scrollHeight;
+            } else if (event === "status") {
+              setStatus(data.message);
+            } else if (event === "video") {
+              playVideo(data.videoUrl);
+            } else if (event === "face_error") {
+              setStatus("Talking face unavailable: " + data.message);
+            } else if (event === "error") {
+              failed = true;
+              addMessage("error", data.message);
+            }
+          });
+        } catch (error) {
+          failed = true;
+          addMessage("error", error.message);
+        } finally {
+          bubble.classList.remove("streaming");
+          setBusy(false);
+        }
+
+        // History must always match what is on screen, including after a
+        // failure - otherwise a follow-up question loses the context the user
+        // can still see above it. A partial reply counts as what was said.
+        if (reply) history.push({ role: "assistant", content: reply });
+        else if (failed) bubble.remove();
+
+        if (failed) return;
+
+        // The rendered clip already carries the audio; only speak without one.
+        if (els.video.style.display !== "block") await speak(reply);
+      }
+
+      // ---------------------------------------------------------------------
+      // Playback
+      // ---------------------------------------------------------------------
+
+      function playVideo(url) {
+        els.video.src = url;
+        els.video.style.display = "block";
+        els.video.play().catch(function () {
+          setStatus("Tap the video to play it.");
+        });
+      }
+
+      function stopPlayback() {
+        if (currentAudio) {
+          currentAudio.pause();
+          URL.revokeObjectURL(currentAudio.src);
+          currentAudio = null;
+        }
+        if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+      }
+
+      /** Server voice when one is configured; the browser's own voice otherwise. */
+      async function speak(text) {
+        if (!text) return;
+
+        if (capabilities.tts) {
+          try {
+            const response = await fetch("/api/tts", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ text }),
+            });
+            if (!response.ok) throw new Error(await errorFrom(response));
+
+            const blob = await response.blob();
+            currentAudio = new Audio(URL.createObjectURL(blob));
+            await currentAudio.play();
+            return;
+          } catch (error) {
+            setStatus("Voice unavailable (" + error.message + ") - using browser voice.");
+          }
+        }
+
+        if (!("speechSynthesis" in window)) return;
+        window.speechSynthesis.cancel();
+        window.speechSynthesis.speak(new SpeechSynthesisUtterance(text));
+      }
+
+      // ---------------------------------------------------------------------
+      // Microphone
+      //
+      // With a server transcriber configured we record the clip and upload it,
+      // which works in every browser. Otherwise we fall back to the browser's
+      // own SpeechRecognition, which is decent but Chrome/Edge only.
+      // ---------------------------------------------------------------------
+
+      const SpeechRecognitionCtor =
+        window.SpeechRecognition || window.webkitSpeechRecognition;
+
+      let recorder = null;
+      let recognition = null;
+
+      function micSupported() {
+        if (capabilities.stt) {
+          return Boolean(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+        }
+        return Boolean(SpeechRecognitionCtor);
+      }
+
+      async function transcribeAndSend(clip) {
+        setStatus("Transcribing...");
+        try {
+          const form = new FormData();
+          form.append("audio", clip, "clip.webm");
+
+          const response = await fetch("/api/transcribe", { method: "POST", body: form });
+          if (!response.ok) throw new Error(await errorFrom(response));
+
+          const body = await response.json();
+          setStatus("");
+          if (body.text) await sendMessage(body.text);
+          else setStatus("Didn't catch that - try again.");
+        } catch (error) {
+          setStatus("Transcription failed: " + error.message);
+        }
+      }
+
+      async function startRecording() {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const chunks = [];
+
+        recorder = new MediaRecorder(stream);
+        recorder.ondataavailable = function (event) {
+          if (event.data.size > 0) chunks.push(event.data);
+        };
+
+        recorder.onstop = function () {
+          stream.getTracks().forEach(function (track) {
+            track.stop();
+          });
+          els.mic.classList.remove("recording");
+          recorder = null;
+
+          const type = chunks.length > 0 ? chunks[0].type : "audio/webm";
+          const clip = new Blob(chunks, { type: type || "audio/webm" });
+          if (clip.size === 0) {
+            setStatus("");
+            return;
+          }
+          void transcribeAndSend(clip);
+        };
+
+        recorder.start();
+        els.mic.classList.add("recording");
+        setStatus("Recording... tap the mic again to send.");
+      }
+
+      function setupBrowserRecognition() {
+        recognition = new SpeechRecognitionCtor();
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        recognition.lang = "en-US";
+
+        recognition.onstart = function () {
+          els.mic.classList.add("recording");
+          setStatus("Listening...");
+        };
+        recognition.onend = function () {
+          els.mic.classList.remove("recording");
+          if (els.status.textContent === "Listening...") setStatus("");
+        };
+        recognition.onerror = function (event) {
+          setStatus("Mic error: " + event.error);
+        };
+        recognition.onresult = function (event) {
+          void sendMessage(event.results[0][0].transcript);
+        };
+      }
+
+      async function toggleMic() {
+        if (busy) return;
+
+        if (capabilities.stt) {
+          if (recorder) {
+            recorder.stop();
+            return;
+          }
+          try {
+            await startRecording();
+          } catch (error) {
+            setStatus("Microphone unavailable: " + error.message);
+          }
+          return;
+        }
+
+        if (!recognition) return;
+        if (els.mic.classList.contains("recording")) recognition.stop();
+        else recognition.start();
+      }
+
+      // ---------------------------------------------------------------------
+      // Wiring
+      // ---------------------------------------------------------------------
+
+      els.form.addEventListener("submit", function (event) {
+        event.preventDefault();
+        const text = els.input.value;
+        els.input.value = "";
+        void sendMessage(text);
+      });
+
+      els.mic.addEventListener("click", function () {
+        void toggleMic();
+      });
+
+      async function init() {
+        try {
+          const response = await fetch("/api/capabilities");
+          if (response.ok) capabilities = await response.json();
+        } catch (ignored) {
+          // Offline, or the server is still booting. The defaults are safe.
+        }
+
+        renderCapabilities();
+
+        if (!capabilities.stt && SpeechRecognitionCtor) setupBrowserRecognition();
+        if (!micSupported()) {
+          els.mic.disabled = true;
+          els.mic.title = "No microphone support in this browser";
+        }
+
+        addMessage(
+          "ai",
+          "Hi - I'm ready. Ask me anything, by typing or by tapping the mic.",
+        );
+      }
+
+      void init();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,14 @@
+node_modules
+dist
+coverage
+.git
+.github
+.env
+.env.*
+!.env.example
+*.log
+public/generated/*
+!public/generated/.gitkeep
+colab
+tests
+README.md
